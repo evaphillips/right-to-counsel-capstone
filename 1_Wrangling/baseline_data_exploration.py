@@ -141,3 +141,43 @@ plt.grid(True)
 plt.legend()
 plt.gca().set_xticks(phil_county_summary['year'].unique())
 plt.show()
+
+
+##############################
+#DC
+##############################
+
+dc = tract_proprietary[tract_proprietary['cofips'] == 11001]
+
+phil_year_fips_summary['filings'].mean()
+
+dc_county = county[county['fips_county'] == 11001]
+
+
+##############################
+#NYC
+##############################
+
+
+nyc = tract_proprietary[tract_proprietary['county'] == 'New York County']
+
+
+nyc_year_fips_summary = nyc.groupby('year').agg({'fips':'nunique','filing_rate':'mean','filings':'sum'
+                                                   ,'threatened':'sum'
+                                                   ,'threatened_rate':'mean'
+                                                   ,'judgements':'sum'
+                                                   ,'judgement_rate':'mean'})
+
+##############################
+#NBoston
+##############################
+
+
+boston = tract_proprietary[tract_proprietary['cofips'] == 	25025]
+
+
+boston_year_fips_summary = boston.groupby('year').agg({'fips':'nunique','filing_rate':'mean','filings':'sum'
+                                                   ,'threatened':'sum'
+                                                   ,'threatened_rate':'mean'
+                                                   ,'judgements':'sum'
+                                                   ,'judgement_rate':'mean'})
