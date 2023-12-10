@@ -30,7 +30,7 @@ library(readxl)
 
 
 ```{r}
-ath = file.path("/Users", "evaphillips", "Library/CloudStorage/OneDrive-nyu.edu/right-to-counsel-capstone-data/01_Eviction/baseline_2000-2018", fsep="/")
+path = file.path("/Users", "evaphillips", "Library/CloudStorage/OneDrive-nyu.edu/right-to-counsel-capstone-data/01_Eviction/baseline_2000-2018", fsep="/")
 setwd(path)
 
 #read in a dataset
@@ -46,9 +46,34 @@ all_tracts_sum <- all_tracts  %>%
 
 ```{r}
 #NYC
-nyc_tracts <- all_tracts_sum %>% filter(county %in% c('Kings County', 'New York County', 'Queens County', 'Bronx', 'Richmond County') & state == 'New York') %>% dplyr::select(-"state")
+nyc_tracts <- all_tracts %>% filter(county %in% c('Kings County', 'New York County', 'Queens County', 'Bronx County', 'Richmond County') & state == 'New York') %>% dplyr::select(-"state")
 
-nyc_tracts
+nyc_tracts_sum <- nyc_tracts %>%
+  group_by(county, year) %>%
+  summarise(filings = sum(filings, na.rm = TRUE), 
+            avg_rt = mean(filing_rate, na.rm=TRUE)) 
+nyc_tracts_sum
+
+nyc_tracts_sum_all <- nyc_tracts %>%
+  group_by(year) %>%
+  summarise(filings = sum(filings, na.rm = TRUE), 
+            avg_rt = mean(filing_rate, na.rm=TRUE)) 
+nyc_tracts_sum_all
+
+
+
+#NYS - NYC
+ny_tracts <- all_tracts %>% filter(!county %in% c('Kings County', 'New York County', 'Queens County', 'Bronx County', 'Richmond County') & state == 'New York')
+
+ny_tracts_sum <- nyc_tracts %>%
+  group_by(year) %>%
+  summarise(filings = sum(filings, na.rm = TRUE), 
+            avg_rt = mean(filing_rate, na.rm=TRUE)) 
+nyc_tracts_sum
+
+
+
+```
 
 ```
 
