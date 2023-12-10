@@ -154,19 +154,7 @@ phil_year_fips_summary['filings'].mean()
 dc_county = county[county['fips_county'] == 11001]
 
 
-##############################
-#NYC
-##############################
 
-
-nyc = tract_proprietary[tract_proprietary['county'] == 'New York County']
-
-
-nyc_year_fips_summary = nyc.groupby('year').agg({'fips':'nunique','filing_rate':'mean','filings':'sum'
-                                                   ,'threatened':'sum'
-                                                   ,'threatened_rate':'mean'
-                                                   ,'judgements':'sum'
-                                                   ,'judgement_rate':'mean'})
 
 ##############################
 #NBoston
@@ -181,3 +169,44 @@ boston_year_fips_summary = boston.groupby('year').agg({'fips':'nunique','filing_
                                                    ,'threatened_rate':'mean'
                                                    ,'judgements':'sum'
                                                    ,'judgement_rate':'mean'})
+
+##############################
+#NYC
+##############################
+
+
+nyc = tract_proprietary[tract_proprietary['county'] == 'New York County']
+
+
+nyc_year_fips_summary = nyc.groupby('year').agg({'fips':'nunique','filing_rate':'mean','filings':'sum'
+                                                   ,'threatened':'sum'
+                                                   ,'threatened_rate':'mean'
+                                                   ,'judgements':'sum'
+                                                   ,'judgement_rate':'mean'}).reset_index()
+
+
+nyc_year_fips_summary['filing_rate'][1]
+
+plt.figure(figsize=(10,4))
+plt.plot(nyc_year_fips_summary['year'], nyc_year_fips_summary['filing_rate']
+         ,marker='o', linestyle='-', color='b', label='Eviction Filings')
+for i in range(len(nyc_year_fips_summary['year'])):
+    plt.text(nyc_year_fips_summary['year'][i], nyc_year_fips_summary['filing_rate'][i], f'{nyc_year_fips_summary["filing_rate"][i]:.1f}%', ha='right', va='bottom')
+plt.title('Eviction Filing Rate NYC by Year')
+plt.grid(True)
+plt.legend()
+plt.gca().set_xticks(nyc_year_fips_summary['year'].unique())
+plt.show()
+
+
+plt.figure(figsize=(10,4))
+plt.plot(nyc_year_fips_summary['year'], nyc_year_fips_summary['filings']
+         ,marker='o', linestyle='-', color='b', label='Eviction Filings')
+for i in range(len(nyc_year_fips_summary['year'])):
+    plt.text(nyc_year_fips_summary['year'][i], nyc_year_fips_summary['filings'][i], f'{nyc_year_fips_summary["filings"][i]:.0f}', ha='right', va='bottom')
+plt.title('Eviction Filings NYC by Year')
+plt.grid(True)
+plt.legend()
+plt.gca().set_xticks(nyc_year_fips_summary['year'].unique())
+plt.show()
+
