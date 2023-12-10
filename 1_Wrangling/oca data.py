@@ -7,16 +7,10 @@ Created on Sat Dec  9 19:07:34 2023
 """
 
 import sqlite3
-import random
-import numpy as np
 import pandas as pd
-from scipy.stats import bootstrap, permutation_test
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set() #adds a style to seaborn plots
-import scipy.stats as stats
-import re
-import os
 import plotly.express as px
 
 # read in the data
