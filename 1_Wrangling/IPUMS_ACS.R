@@ -24,11 +24,8 @@ library(ipumsr)
 
 # Documentation ----------------------------------------------------------------
 
-# see this webinar: https://www.youtube.com/watch?v=OT6upQ1dBgU 
-# and https://v1.developer.ipums.org/docs/workflows/create_extracts/cps/ 
-
 # sample IDs can be found here: https://usa.ipums.org/usa-action/samples/sample_ids
-# variable mnemonics are in the IPUMS CPS extract building interface https://cps.ipums.org/cps-action/variables/group 
+# variable mnemonics are in the IPUMS CPS extract building interface https://usa.ipums.org/usa-action/variables/group
 
 # API Call ---------------------------------------------------------------------
 
