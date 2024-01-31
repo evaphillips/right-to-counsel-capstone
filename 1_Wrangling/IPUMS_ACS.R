@@ -45,6 +45,10 @@ ACS_extract_1yr <- define_extract_usa(
     "COUNTYFIP", #FIPS county code
     "DENSITY", #population weighted density of PUMA
     "PUMA", # Public Use Microdata Area
+    
+    # Weights
+    "HHWT", #household weight
+    "PERWT",
 
     # Family relationships/structure
     "MOMLOC",#Person number of first mother (P)
@@ -91,7 +95,16 @@ ACS_extract_09_20_1yr <- ACS_extract_1yr %>%
 ACS_1_year_NYC <- ACS_extract_09_20_1yr %>% 
   filter(STATEFIP == 36) %>% 
   filter(COUNTYFIP %in% c(5,61, 81, 85, 47))
-  
+
+# weight test
+
+ACS_1_year_NYC_2019_pop <- ACS_1_year_NYC %>%
+  filter(YEAR == 2019) %>%
+  group_by(PUMA, SEX) %>%
+  summarize(
+    total_pop = sum(PERWT),
+    total_pop2 = n()
+  )
 
 # filter for renters
 # RELATE: 0101 = head of household, 0301 = child, 0303 = step child
@@ -102,44 +115,44 @@ filtered_sample_ACS_1yr <- ACS_1_year_NYC %>%
                                YNGCH > 5 & YNGCH <= 11 ~ "2",
                                YNGCH > 10 & YNGCH <= 18 ~ "3",
                                YNGCH == 5 ~ "4")) %>%
-  filter(RELATE== 1,
-         YNGCH <= 18) #head of household
+  filter(RELATE== 1, #head of household
+         YNGCH <= 18) 
 
 
 summary_acs_1yr <- filtered_sample_ACS_1yr %>%
   group_by(YEAR) %>%
-  summarise(Total = n(),
-            Children_5 = length(SERIAL[fam_group == 1]),
-            Chilren_6_11 = length(SERIAL[fam_group == 2]),
-            Children_11_18 = length(SERIAL[fam_group == 3]),
-            renter = length(SERIAL[OWNERSHP == 2]),
-            moved_within_statw = length(SERIAL[MIGRATE1 ==2]),
-            moved_outside_state = length(SERIAL[MIGRATE1 == 3]))
+  summarise(Total = sum(HHWT),
+            Children_5 = sum(HHWT[fam_group == 1]),
+            Chilren_6_11 = sum(HHWT[fam_group == 2]),
+            Children_11_18 = sum(HHWT[fam_group == 3]),
+            renter = sum(HHWT[OWNERSHP == 2]),
+            moved_within_statw = sum(HHWT[MIGRATE1 ==2]),
+            moved_outside_state = sum(HHWT[MIGRATE1 == 3]))
 
-write.csv(summary_acs_1yr, "/Users/evaphillips/Documents/GitHub/universal-pre-k/1_Wrangling/1_Data_Review/ACS_summary_year.csv")
+write.csv(summary_acs_1yr, "/Users/evaphillips/Documents/GitHub/universal-pre-k/1_Wrangling/1_Data_Review/ACS_summary_year_wgt.csv")
 
 summary_acs_1yr_2012 <- filtered_sample_ACS_1yr %>%
   filter(fam_group == 1 | fam_group ==2) %>%
   filter(YEAR == 2012) %>%
   group_by(fam_group) %>%
-  summarise(Total = n(),
-            PCT_renter = length(SERIAL[OWNERSHP == 2])/Total *100,
-            moved = length(SERIAL[MIGRATE1 ==2 | MIGRATE1 == 3 | MIGRATE1 == 4]),
+  summarise(Total = sum(HHWT),
+            PCT_renter = sum(HHWT[OWNERSHP == 2])/Total *100,
+            moved = sum(HHWT[MIGRATE1 ==2 | MIGRATE1 == 3 | MIGRATE1 == 4]),
             move_rate = moved/Total *100)
 
-write.csv(summary_acs_1yr_2012, "/Users/evaphillips/Documents/GitHub/universal-pre-k/1_Wrangling/1_Data_Review/ACS_summary_2012.csv")
+write.csv(summary_acs_1yr_2012, "/Users/evaphillips/Documents/GitHub/universal-pre-k/1_Wrangling/1_Data_Review/ACS_summary_2012_wgt.csv")
 
 summary_acs_1yr_2016 <- filtered_sample_ACS_1yr %>%
   filter(fam_group == 1 | fam_group ==2) %>%
   filter(YEAR == 2016) %>%
   group_by(fam_group) %>%
-  summarise(Total = n(),
-            PCT_renter = length(SERIAL[OWNERSHP == 2])/Total *100,
-            moved = length(SERIAL[MIGRATE1 ==2 | MIGRATE1 == 3 | MIGRATE1 == 4]),
+  summarise(Total = sum(HHWT),
+            PCT_renter = sum(HHWT[OWNERSHP == 2])/Total *100,
+            moved = sum(HHWT[MIGRATE1 ==2 | MIGRATE1 == 3 | MIGRATE1 == 4]),
             move_rate = moved/Total *100)
 
 
-write.csv(summary_acs_1yr_2016, "/Users/evaphillips/Documents/GitHub/universal-pre-k/1_Wrangling/1_Data_Review/ACS_summary_2016.csv")
+write.csv(summary_acs_1yr_2016, "/Users/evaphillips/Documents/GitHub/universal-pre-k/1_Wrangling/1_Data_Review/ACS_summary_2016_wgt.csv")
 
 
 # TRENDS DATA ------------------------------------------------------------------  
@@ -149,8 +162,8 @@ summary_acs_1_yr_trend <- filtered_sample_ACS_1yr %>%
   filter(YEAR != 2020) %>%
   filter(fam_group == 1 | fam_group ==2) %>%
   group_by(YEAR, fam_group) %>%
-  summarise(Total = n(),
-            moved = length(SERIAL[MIGRATE1 ==2 | MIGRATE1 == 3 | MIGRATE1 == 4]),
+  summarise(Total = sum(HHWT),
+            moved = sum(HHWT[MIGRATE1 ==2 | MIGRATE1 == 3 | MIGRATE1 == 4]),
             move_rate = moved/Total *100) %>%
   mutate(fam_group = case_when(fam_group == 1 ~ "Households with children under age 5",
                                fam_group == 2 ~ "Households with children aged 6-11"),
