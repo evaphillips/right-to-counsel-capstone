@@ -15,6 +15,10 @@ library(grid)
 library(gridExtra)
 library(readxl)
 
+pums_vars_2021 <- pums_variables %>% 
+  filter(year == 2021, survey == "acs5") 
+
+
 # EXAMPLE 1  ------------------------------------------------------------------------
 
 

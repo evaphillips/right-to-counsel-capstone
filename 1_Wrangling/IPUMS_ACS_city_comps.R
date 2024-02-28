@@ -1,10 +1,10 @@
 # ------------------------------------------------------------------------------
 
-# PROJECT: IPUMS CPS API
+# PROJECT: IPUMS ACS API - Create the dataset
 # AUTHOR: Eva Phillips
 # DATE: 2023-12-14
 
-# PURPOSE: Pull CPS Data
+# PURPOSE: Pull ACS IPUMS Data
 
 # Setup ------------------------------------------------------------------------
 # install.packages("dplyr")
@@ -112,112 +112,34 @@ ACS_1_year_cities <- ACS_extract_09_20_1yr %>%
                                   0120,0121,0122, 0123, 0125, 0128, 0129) ~ "PHX"))
 
 
-#NYC
-# ACS_1_year_NYC <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 36) %>% 
-#   filter(COUNTYFIP %in% c(5,61, 81, 85, 47))%>%
-#   mutate(city = 'NYC')
-
-#DC
-# ACS_1_year_DC <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 11) %>%
-#   mutate(city = 'DC')
-
-#Baltimore (Baltimore county = city)
-# ACS_1_year_BAL <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 24) %>% 
-#   filter(COUNTYFIP == 005) %>%
-#   mutate(city = 'BAL')
-# 
-# #Houston (Harris county = the city)
-# ACS_1_year_HOU <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 48) %>% 
-#   filter(COUNTYFIP == 201) %>%
-#   mutate(city = 'HOU')
-
-#Chicago (Cooks county != Chicago, so had to use PUMAs)
-# ACS_1_year_CHI <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 17) %>% 
-#   filter(PUMA %in% c(3501, 3502, 3503, 3504, 3505, 3506, 3507, 3508, 3509,
-#                      3510, 3511, 3512, 3513, 3514, 3514, 3516, 3517, 3518, 3519)) %>%
-#   mutate(city = 'CHI')
-
-# #Philadelphia 
-# ACS_1_year_PHI <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 42) %>% 
-#   filter(COUNTYFIP == 101) %>%
-#   mutate(city = 'PHI')
-
-#LA
-# ACS_1_year_LA <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 06) %>% 
-#   filter(COUNTYFIP == 037) %>%
-#   mutate(city = 'LA')
-
-#San Diego
-# ACS_1_year_SD <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 06) %>% 
-#   filter(COUNTYFIP == 073) %>%
-#   mutate(city = 'SD')
-
-#Phoenix 
-# ACS_1_year_PHX <- ACS_extract_09_20_1yr %>% 
-#   filter(STATEFIP == 04) %>%
-#   filter(PUMA %in% c(0112, 0113, 0114, 0115, 0116, 0117, 0118, 0119, 0120, 
-#                      0121,0122, 0123, 0125, 0128, 0129)) %>%
-#   mutate(city = 'PHX')
-
-
 
 #SAMPLE FILTERS ------------------------
 
 # sample filters:
 ## heads of households
 ## renters (look at 0s and negatives)
-## remove households receiving housing subsidy
-## try two ways:
-#  - households with only UPK eligible children
-#  - households with children under 18 (min 1 UPK eligible)
+## households with at least one pre-k age child
   
 # RELATE: 0101 = head of household, 0301 = child, 0303 = step child
 
-#SAMPLE 1 -- pre-k age children only
-filtered_sample_prek_only <- ACS_1_year_cities %>%
-  filter(!is.na(city), # Filter only for our cities
-         RELATE == 1, # Head of household
-         OWNERSHP == 2,# Renters
-         NCHLT5 > 0, # Number of own children under age 5 is > 1
-         ELDCH < 5)  # Oldest child is under 5
 
-write.csv(filtered_sample_prek_only, 'filtered_sample_prek_only.csv')
-
-#SAMPLE 2 -- pre-k age children, other children under 18 years
-filtered_sample_prek_18 <- ACS_1_year_cities %>%
-  filter(!is.na(city), # Filter only for our cities
-         RELATE== 1, # Head of household
-         OWNERSHP == 2, # Renters
-         NCHLT5 > 0, # Number of own children under age 5 is > 1
-         ELDCH < 19)  # Oldest child is 18 or under
-
-write.csv(filtered_sample_prek_18, 'filtered_sample_prek_18.csv')
-
-#SAMPLE 3 -- pre-k age children all household
 filtered_sample_prek_all <- ACS_1_year_cities %>%
   filter(!is.na(city), # Filter only for our cities
-         RELATE== 1, # Head of household
-         OWNERSHP == 2, # Renters
-         NCHLT5 > 0) # Number of own children under age 5 is > 1
-
-write.csv(filtered_sample_prek_all, 'filtered_sample_prek_all.csv')
+        RELATE == 1, # Head of household
+        OWNERSHP == 2, # Renters
+        NCHLT5 > 0) # Number of own children under age 5 is > 1
+ 
+write.csv(filtered_sample_prek_all, 'filtered_sample_prek_allcities.csv')
  
 
 # TRENDS DATA ------------------------------------------------------------------  
 
+filtered_sample_prek_all <- read.csv("filtered_sample_prek_all.csv")
 
 summary_acs_1_yr_trend <- filtered_sample_prek_all %>%
-  filter(YEAR != 2020) %>%
+  filter(YEAR >= 2009) %>%
 #  filter(city == 'NYC' | city == 'LA') %>%
-  group_by(YEAR, city) %>%
+  group_by(YEAR, city, PUMA) %>%
   summarise(Total = sum(HHWT),
             moved = sum(HHWT[MIGRATE1 ==2 | MIGRATE1 == 3 | MIGRATE1 == 4]),
             move_rate = moved/Total *100) %>%
@@ -230,6 +152,7 @@ summary_acs_1_yr_trend <- filtered_sample_prek_all %>%
 fit_model <- function(city_list, summary_data){
   
   summary_data <- summary_data[summary_data$city %in% city_list, ]
+  summary_data$city <- factor(summary_data$city, levels = city_list)
   mod <- lm(move_rate ~ 
               YEAR + #slope for year
               city +  #intercept for city
@@ -263,11 +186,66 @@ fit_model <- function(city_list, summary_data){
   
 }
 
-fit_model(c('NYC', 'PHX'), summary_acs_1_yr_trend)
-
-fit_model(c('NYC', 'LA'), summary_acs_1_yr_trend)
+fit_model(c('PHX', 'NYC'), summary_acs_1_yr_trend)
+fit_model(c('LA', 'NYC'), summary_acs_1_yr_trend)
 
 #next step is to test whether the difference in the slope is statistically significant 
-  
+filtered_sample_prek_all <- read.csv("filtered_sample_prek_only.csv")
+filtered_sample_prek_all$moved <- 0
+filtered_sample_prek_all
+
+
+
+
+-----------------
+
+
+
+
+city_list <- c('PHX', 'NYC')
+summary_data <- summary_acs_1_yr_trend
+summary_data$YEAR <- summary_data$YEAR - 2014 #to fix the intercepts at 2014
+summary_data$flag_2 <- "Pre"  #flag only for NYC, used to fix intercept for comparison city
+summary_data[summary_data$city == "NYC" & summary_data$YEAR >= 0, "flag_2"] <- "Post"
+summary_data$flag <- factor(summary_data$flag, levels = c("Pre", "Post"))
+summary_data$flag_2 <- factor(summary_data$flag_2, levels = c("Pre", "Post"))
+
+#fit the model
+summary_data <- summary_data[summary_data$city %in% city_list, ]
+summary_data$city <- factor(summary_data$city, levels = city_list)
+mod <- lm(move_rate ~ 
+            YEAR + #slope for year
+            city +  #intercept for city
+            flag_2 + 
+            YEAR:city + #interaction between family_group x year
+            YEAR:flag:city, #interaction between year x pre/post (allows slope change)
+          data = as.data.frame(summary_data)) #specify data
+summary(mod) 
+ 
+#VISUALIZATION -- create fake data for prediction and plotting
+acs_pdata <- data.frame(YEAR = rep(seq(-5, 5, length.out = 20), times = 2),
+                        city = rep(city_list, each = 20))
+acs_pdata$flag <- "Pre"
+acs_pdata[acs_pdata$YEAR >= 0, "flag"] <- "Post"
+acs_pdata$flag_2 <- "Pre"
+acs_pdata[acs_pdata$city == "NYC" & acs_pdata$YEAR >= 0, "flag_2"] <- "Post"
+acs_pdata <- rbind(acs_pdata, data.frame(YEAR = rep(0, 4), 
+                                         city = rep(city_list, each = 2),
+                                         flag = rep(c("Pre", "Post"), times = 2),
+                                         flag_2 = c("Pre", "Pre", "Pre", "Post")))
+
+#use linear model to predict move rate from the fake data
+acs_pdata$move_rate <- predict.lm(mod, acs_pdata, se.fit = TRUE)$fit
+acs_pdata
+
+ggplot(data = acs_pdata, aes(x = YEAR, y = move_rate, color = city, linetype = flag)) + 
+  geom_vline(xintercept = 0) +
+  geom_line(size = 1) + 
+  geom_point(data = summary_data, size = 2.5, alpha = 0.4) +
+  labs(title = "Mobility Rates by Year, ACS 1-Year Estimates") + 
+  scale_x_continuous(breaks = -5:5, expand = c(0,0)) +
+  theme_bw()
+
+
   
                     
