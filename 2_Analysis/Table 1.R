@@ -1,19 +1,29 @@
+
+
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(sf)
 library(gtsummary)
-
-install.packages("survey")
 library(survey)
-data(filtered_sample_prek_allcities, package = "survey")
 
-svy_filtered_sample_prek_allcities <-
-  survey::svydesign(
-    id = ~CLUSTER,
-    weights = ~HHWT,
-    data = filtered_sample_prek_allcities
-  )
+df <- read.csv("/Users/evaphillips/Documents/GitHub/universal-pre-k/0_Data/filtered_sample_prek_allcities.csv") 
 
-install.packages("tbl_svysummary")
-library("tbl_svysummary")
-svy_filtered_sample_prek_allcities %>%
+df <- df %>% filter(city %in% c('NYC', 'PHI'))
+
+
+df_svy <- survey::svydesign(~1, weights = ~HHWT, data = df) %>%
+  tbl_svysummary(by = city, 
+                 include = c(SEX,AGE,MARST),
+                 label = list(
+                   SEX ~ "Sex",
+                   AGE ~ "Age",
+                   MARST ~ "Marital Status"))
+  
+  
+  --------------------
+  
+  
   tbl_svysummary(
     by = city,
     statistic = list(all_continuous() ~ "{mean} ({sd})",
