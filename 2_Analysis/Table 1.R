@@ -11,6 +11,8 @@ df <- read.csv("/Users/evaphillips/Documents/GitHub/universal-pre-k/0_Data/filte
 
 df <- df %>% filter(city %in% c('NYC', 'PHI'))
 
+df_test <- df %>% filter(city == 'NYC') %>% select(HHWT) %>% sum()
+
 
 df_svy <- survey::svydesign(~1, weights = ~HHWT, data = df) %>%
   tbl_svysummary(by = city, 
