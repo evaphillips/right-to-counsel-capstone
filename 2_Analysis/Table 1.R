@@ -1,4 +1,13 @@
 
+# ------------------------------------------------------------------------------
+
+# PROJECT: Universal Prek
+# AUTHOR: Anuska 
+# DATE: 2023-12-14
+
+# PURPOSE: Generate table 1 descriptive stats
+
+# Setup ------------------------------------------------------------------------
 
 library(dplyr)
 library(ggplot2)
