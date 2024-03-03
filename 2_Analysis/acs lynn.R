@@ -139,26 +139,37 @@ phi <- subset(filtered_sample_prek_all, city %in% c("NYC", "PHI"))
 phi$city_ind <- ifelse(phi$city == "NYC", 1, 0)
 
 # create a flag for post-period
-phi$post <- ifelse(phi$YEAR >= 2014,1,0)
+phi <- phi %>%
+  mutate(year_flag = case_when(
+    city == 'NYC' ~ phi$YEAR, .default = 0))
+
+phi$year_flag
 
 
 # make MIGRATE1 binary
 phi <- phi %>%
   mutate(migrate_binary = ifelse(MIGRATE1 %in% c(2, 3, 4), 1, 0))
 
+# create a new year if the INX indicator is supposed to be 0 for control (???) 
+#phi$Year_flag <- ifelse(city_ind == 1), phi$Year,0))
+
+
 # create a flag for year
 prepended_value <- "INX"
-phi$Year_INX <- paste0(prepended_value, phi$YEAR)
+phi$Year_INX <- paste0(prepended_value, phi$Year_INX)
 phi_wide <- pivot_wider(phi, names_from = Year_INX, values_from = Year_INX, values_fn = list(Year_INX = length), values_fill = 0)
+
+#phi_wide <- subset(phi_wide, select = -INX0)
 
 # estimate the regression
 es <- lm(migrate_binary ~ ., data = select(phi_wide
+                                           #, city_ind
                                            , migrate_binary
                                            , HHINCOME, SEX, AGE # control vars
                                            , starts_with("INX"))
 )
 
-#summary(es)
+summary(es)
 
 # get standard errors
 out = summary(es)
@@ -194,24 +205,84 @@ ggplot(data = merged_df, mapping = aes(x = Year, y = Coefficient)) +
 #MODEL
 #---------------------------------------
 
-#oooooh boy
+# with 3 controls
+model <- lm(migrate_binary ~ 
+              YEAR +
+              post + #flag for pre/post
+              city_ind + #flag for treatment vs. control
+              post:city_ind +
+              HHINCOME +
+              AGE + 
+              SEX, 
+            data = phi)
+
+# with controls
+model <- lm(migrate_binary ~ 
+              YEAR +
+              post + #flag for pre/post
+              city_ind + #flag for treatment vs. control
+              post:city_ind +
+              HHINCOME +
+              AGE + 
+              SEX +
+              POVERTY +
+              NCHILD +
+              RACE + 
+              MARST + #Marital status
+              EMPSTAT +
+              MULTGEN,
+            data = phi)
 
 head(phi)
+# Family relationships/structure
+"MOMLOC",#Person number of first mother (P)
+"MOMRULE",#Rule for linking first mother (P)
+"SPLOC", #Person number of spouse (P)
+"SPRULE", #Rule for linking spouse (P)
+"NCHILD", #Number of own children in household (P)
+"NCHLT5", #Number of own children under age 5 in hh (P)
+"FAMUNIT", #Family unit membership (P)
+"YNGCH", #Age of youngest own child in household (P)
+"ELDCH", #Age of the eldest own child in household (P)
+"RELATE", #Relationship to household head (P)
 
-model <- lm(migrate_binary ~ 
-           YEAR +
-           post + #flag for pre/post
-           city_ind + #flag for treatment vs. control
-           YEAR:city_ind + # interaction
-           YEAR:post +
-           YEAR:post:city_ind +
-           HHINCOME +
-           AGE + 
-           SEX,
-         data = phi)
+# Economic variables
+"HHINCOME", #total household income (H)
+"POVERTY", #Poverty status (P)
+"OWNERSHP", #Ownership of dwelling (H)
+"FTOTINC", #total family income (P)
+# "PUBHOUS", #public housing -- only in CPS
+# "RENTSUB", #government rental subsidy -- only in CPS
+"MULTGEN",
+
+# Demographics
+"AGE", 
+"SEX",
+"RACE",
+"EDUC", #educational attainment
+"HISPAN", #Hispanic origin
+"MARST", #Marital status
+"EMPSTAT", #employment status
 
 summary(model)
 
+head(phi)
+
+
+##### 
+modelyear <- lm(migrate_binary ~ 
+                  YEAR +
+                  post + #flag for pre/post
+                  city_ind + #flag for treatment vs. control
+                  YEAR:city_ind + # interaction
+                  YEAR:post +
+                  YEAR:post:city_ind +
+                  HHINCOME +
+                  AGE + 
+                  SEX,
+                data = phi)
+
+summary(modelyear)
 
 
 
