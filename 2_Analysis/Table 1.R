@@ -20,8 +20,16 @@ df <- read.csv("/Users/evaphillips/Documents/GitHub/universal-pre-k/0_Data/filte
 
 df <- df %>% filter(city %in% c('NYC', 'PHI'))
 
-df_test <- df %>% filter(city == 'NYC') %>% select(HHWT) %>% sum()
+#df_test <- df %>% filter(city == 'NYC') %>% select(HHWT) %>% sum()
 
+df <- df %>% 
+  mutate(MARST_clean = case_when(MARST == 1 ~ 'Married',
+                                            MARST == 2 ~ 'Divorced',
+                                            .default = 'Single')) %>%
+  mutate(MARST_2 = case_when(MARST == 1 ~ 'Married',
+                                 MARST == 2 ~ 'Divorced',
+                                 .default = 'Single'))
+  
 
 df_svy <- survey::svydesign(~1, weights = ~HHWT, data = df) %>%
   tbl_svysummary(by = city, 
