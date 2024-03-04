@@ -18,7 +18,7 @@ library(did)
 
 # TRENDS DATA ------------------------------------------------------------------  
 
-sample <- read.csv("filtered_sample_prek_allcities.csv")%>%
+sample <- read.csv("/Users/evaphillips/Documents/GitHub/universal-pre-k/0_Data/filtered_sample_prek_allcities.csv")%>%
   filter(YEAR >= 2009) %>%
   mutate(moved = case_when(MIGRATE1 ==2 ~ 1,
                            MIGRATE1 == 2 ~ 1,
@@ -34,19 +34,23 @@ sample_summary <- sample %>%
             move_rate = round(total_moved/total *100, 2)) %>%
   mutate(treat = case_when(YEAR < 2014 ~ 0,
                            YEAR >= 2014 & city == 'NYC' ~ 1, 
-                           YEAR >= 2014 & city != 'NYC' ~ 0)) 
+                           YEAR >= 2014 & city != 'NYC' ~ 0)) %>%
+  mutate(City = case_when(city == 'NYC' ~ 'New York City, NY', 
+                          city == 'SD'~ 'San Diego, CA', 
+                          .default = city))
 
 #create plots
-cities <-unique(sample_summary$city)
+cities <-unique(sample_summary$City)
+
 
 for (i in cities) {
-  nyc_city <- sample_summary %>% filter(city == 'NYC' | city == i) %>% filter(YEAR<2020)
-  plot <-  nyc_city %>%
-    ggplot() +
-    aes(x = YEAR, y = move_rate, color = city) + 
+  nyc_city <- sample_summary %>% filter(City == 'New York City, NY' | City == i) %>% filter(YEAR<2020)
+  plot <- 
+    ggplot(nyc_city, aes(YEAR, y = move_rate, color = City)) +
     geom_line(size = .75, linetype = 2) + 
     geom_vline(xintercept = 2014) +
     geom_point(data = nyc_city, size = 2.5, alpha = 0.4) +
+    geom_smooth(data=dplyr::filter(nyc_city, YEAR<2015), method = 'lm',se = FALSE)+
     scale_x_continuous(breaks = seq(2009, 2019, 1)) +
     labs(title = "Mobility Rates of Families with PreK-Aged Children") + 
     ylab("Percent Moved")+
@@ -54,6 +58,28 @@ for (i in cities) {
     theme_bw()
   print(plot)
 }
+
+# 
+# cities <-unique(sample_summary$city)
+# 
+# 
+# for (i in cities) {
+#   nyc_city <- sample_summary %>% filter(city == 'NYC' | city == i) %>% filter(YEAR<2020)
+#   plot <- 
+#     ggplot(nyc_city, aes(YEAR, y = move_rate, color = city)) +
+#     geom_line(size = .75, linetype = 2) + 
+#     geom_vline(xintercept = 2014) +
+#     geom_point(data = nyc_city, size = 2.5, alpha = 0.4) +
+#     geom_smooth(data=dplyr::filter(nyc_city, YEAR<2015), method = 'lm',se = FALSE)+
+#     scale_x_continuous(breaks = seq(2009, 2019, 1)) +
+#     labs(title = "Mobility Rates of Families with PreK-Aged Children") + 
+#     ylab("Percent Moved")+
+#     xlab("Year") +
+#     theme_bw()
+#   print(plot)
+# }
+
+
 
 # test pre-trends
 

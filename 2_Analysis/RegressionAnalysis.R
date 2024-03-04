@@ -18,7 +18,7 @@ library(ipumsr)
 
 # TRENDS DATA ------------------------------------------------------------------  
 
-filtered_sample_prek_all <- read.csv("filtered_sample_prek_allcities.csv")
+filtered_sample_prek_all <- read.csv("/Users/evaphillips/Documents/GitHub/universal-pre-k/0_Data/filtered_sample_prek_allcities.csv")
 
 summary_acs_1_yr_trend <- filtered_sample_prek_all %>%
   filter(YEAR >= 2009) %>%
