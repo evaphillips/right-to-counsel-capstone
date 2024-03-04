@@ -16,30 +16,43 @@ library(sf)
 library(gtsummary)
 library(survey)
 
-df <- read.csv("/Users/evaphillips/Documents/GitHub/universal-pre-k/0_Data/filtered_sample_prek_allcities.csv") 
+df <- read.csv("/Users/anuskacorbin/Desktop/universal-pre-k/0_Data/filtered_sample_prek_allcities.csv") 
 
-df <- df %>% filter(city %in% c('NYC', 'PHI'))
+df <- df %>% filter(city %in% c('NYC', 'SD'))
 
 #df_test <- df %>% filter(city == 'NYC') %>% select(HHWT) %>% sum()
 
 df <- df %>% 
   mutate(MARST_clean = case_when(MARST == 1 ~ 'Married',
-                                            MARST == 2 ~ 'Divorced',
+                                            MARST == 2 ~ 'Married',
                                             .default = 'Single')) %>%
-  mutate(MARST_2 = case_when(MARST == 1 ~ 'Married',
-                                 MARST == 2 ~ 'Divorced',
-                                 .default = 'Single'))
+  mutate(SEX_clean = case_when(SEX == 1 ~ 'Male',
+                                 SEX == 2 ~ 'Female')) %>%
+  mutate(MIGRATE_clean = case_when(MIGRATE1 == 1 ~ 'Non-movers',
+                                   .default = 'Movers')) %>%
+  mutate(EMPSTAT_clean = case_when(EMPSTAT == 1 ~ 'Employed',
+                                   EMPSTAT == 2 ~ 'Unemployed',
+                                   EMPSTAT == 3 ~ 'Not in Labor Force'))
+  
+  
+  
+  df_svy <- survey::svydesign(~1, weights = ~HHWT, data = df) %>%
+    tbl_svysummary(by = city, 
+                   include = c(MIGRATE_clean,SEX_clean,AGE,MARST_clean,EMPSTAT_clean,NCHILD,ELDCH,YNGCH,FTOTINC),
+                   label = list(
+                     MIGRATE_clean ~ "Migration",
+                     SEX_clean ~ "Sex",
+                     AGE ~ "Age",
+                     MARST_clean ~ "Marital Status",
+                     EMPSTAT_clean ~ "Employment Status",
+                     NCHILD ~ "Number of Children",
+                     ELDCH ~ "Eldest Child Age",
+                     YNGCH ~ "Youngest Child Age",
+                     FTOTINC ~ "Family Total Income"))
+ 
+  df_svy
   
 
-df_svy <- survey::svydesign(~1, weights = ~HHWT, data = df) %>%
-  tbl_svysummary(by = city, 
-                 include = c(SEX,AGE,MARST),
-                 label = list(
-                   SEX ~ "Sex",
-                   AGE ~ "Age",
-                   MARST ~ "Marital Status"))
-  
-  
   --------------------
   
   
@@ -53,7 +66,7 @@ df_svy <- survey::svydesign(~1, weights = ~HHWT, data = df) %>%
       ELDCH ~ "Eldest Child Age",
       YNGCH ~ "Youngest Child Age",
       MARST ~ "Marital Status",
-      EDUC ~ "Years of Education",
+      EDUC ~ "Educational Attainment",
       EMPSTAT ~ "Employment Status",
       FTOTINC ~ "Family Total Income"
       )
