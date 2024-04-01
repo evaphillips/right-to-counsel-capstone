@@ -32,54 +32,44 @@ df <- df %>%
                                    .default = 'Movers')) %>%
   mutate(EMPSTAT_clean = case_when(EMPSTAT == 1 ~ 'Employed',
                                    EMPSTAT == 2 ~ 'Unemployed',
-                                   EMPSTAT == 3 ~ 'Not in Labor Force'))
+                                   EMPSTAT == 3 ~ 'Not in Labor Force')) %>%
+  mutate(RACE_clean = case_when(RACE == 1 ~ 'White',
+                                   RACE == 2 ~ 'Black',
+                                   RACE == 3 ~ 'American Indian or Alaska Native',
+                                   RACE == 6 ~ 'Other Asian or Pacific Islander',
+                                   RACE == 7 ~ 'Other race',
+                                   RACE == 8 ~ 'Biracial',
+                                   RACE == 9 ~ 'Three or more major races',
+                                  .default = 'Asian'))
+                              
+  
   
   
   
   df_svy <- survey::svydesign(~1, weights = ~HHWT, data = df) %>%
     tbl_svysummary(by = city, 
-                   include = c(MIGRATE_clean,SEX_clean,AGE,MARST_clean,EMPSTAT_clean,NCHILD,ELDCH,YNGCH,FTOTINC),
+                   include = c(MIGRATE_clean,SEX_clean,AGE,MARST_clean,EMPSTAT_clean,RACE_clean,NCHILD,YNGCH,POVERTY,HHINCOME,FTOTINC),
                    label = list(
                      MIGRATE_clean ~ "Migration",
                      SEX_clean ~ "Sex",
                      AGE ~ "Age",
                      MARST_clean ~ "Marital Status",
                      EMPSTAT_clean ~ "Employment Status",
+                     RACE_clean ~ "Race",
                      NCHILD ~ "Number of Children",
-                     ELDCH ~ "Eldest Child Age",
                      YNGCH ~ "Youngest Child Age",
-                     FTOTINC ~ "Family Total Income"))
+                     POVERTY ~ "Poverty Status",
+                     HHINCOME ~ "Total Household Income",
+                     FTOTINC ~ "Total Family Income")) %>% 
+                      modify_header(
+                        label = '**Demographic**',
+                        stat_1 = '**New York City**',
+                        stat_2 = '**San Diego**'
+                      ) %>%
+                      modify_spanning_header(all_stat_cols() ~ "**City**")
  
   df_svy
   
-
+ 
   --------------------
   
-  
-  tbl_svysummary(
-    by = city,
-    statistic = list(all_continuous() ~ "{mean} ({sd})",
-                     all_categorical() ~ "{n} / {N} ({p}%)",
-    include = c(YEAR,NCHILD,ELDCH,YNGCH,SEX,AGE,MARST,RACE,HISPAN,HISPAND,EDUC,EMPSTAT,FTOTINC,POVERTY,MIGRATE1),
-    label = list(
-      NCHILD ~ "Number of Children",
-      ELDCH ~ "Eldest Child Age",
-      YNGCH ~ "Youngest Child Age",
-      MARST ~ "Marital Status",
-      EDUC ~ "Educational Attainment",
-      EMPSTAT ~ "Employment Status",
-      FTOTINC ~ "Family Total Income"
-      )
-  ) %>%
-  add_p() %>%
-  add_overall() %>%
-    modify_spanning_header(c("stat_1", "stat_2", "stat_3", "stat_4", "stat_5", "stat_6") ~ "**City**"))
-
-install.packages("summarize")
-summarize(filtered_sample_prek_allcities, N_hat = sum(HHWT))
-
-install.packages("svydesign")
-library(svydesign)
-sample_design <- svydesign(data = filtered_sample_prek_allcities, 
-                           strata = ~STRATA, id = ~CLUSTER, nest = TRUE,
-                           weights = ~HHWT)
