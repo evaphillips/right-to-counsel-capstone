@@ -152,25 +152,66 @@ control$city_ind <- ifelse(control$city == "NYC", 1, 0)
 # create a flag for post-period
 control$post <- ifelse(control$YEAR >= 2014, 1, 0)
 
+# Adding Binary Variables and Dummies-------------------------------------------
+
 # make MIGRATE1 binary
 control <- control %>%
   mutate(migrate_binary = ifelse(MIGRATE1 %in% c(2, 3, 4), 1, 0))
+
+#Binary variable for Sex
+control$MALE <- ifelse(control$SEX == 1, 1, 0)
+
+#Binary Dummies for Race
+control$WHITE<- ifelse(control$RACE == 1, 1, 0)
+control$BLACK <- ifelse(control$RACE == 2, 1, 0)
+control$INDIAN_ALASKA <- ifelse(control$RACE == 3, 1, 0)
+control$ASIAN_PACIFIC <- ifelse(control$RACE %in% c(4, 5, 6), 1, 0)
+control$OTHER_RACE <- ifelse(control$RACE == 7, 1, 0)
+control$MULTIPLE_RACE <- ifelse(control$RACE %in% c(8,9), 1, 0)
+
+#Binary variable for married people
+control$married1 <- ifelse(control$MARST == 1, 1,0)
+
+control$MARRIED <- ifelse(control$MARST %in% c(1,2), 1, 0)
+
+#Binary variable for employed people
+control$EMPLOYED <- ifelse(control$EMPSTAT == 1, 1, 0)
+
+#Binary variable for not in labor force
+control$NOTLABOR <- ifelse(control$EMPSTAT == 3, 1, 0)
+
+#Dummy variables for numbers of generation in the family
+control$ONE_GEN <- ifelse(control$MULTGEN == 1, 1, 0)
+control$TWO_GEN <- ifelse(control$MULTGEN == 2, 1, 0)
+control$THREE_MORE_GEN <- ifelse(control$MULTGEN == 3, 1, 0)
 
 # create a flag for year
 prepended_value <- "INX"
 control$Year_INX <- paste0(prepended_value, control$YEAR)
 control_wide <- pivot_wider(control, names_from = Year_INX, values_from = Year_INX, values_fn = list(Year_INX = length), values_fill = 0)
 
+lapply(control[c('MARRIED', 'EMPLOYED', 'NOTLABOR')], unique)
+
 # estimate the regression
 es <- lm(migrate_binary ~ ., data = select(control_wide
                                            , migrate_binary
-                                           , HHINCOME, SEX, AGE, 
-                                             POVERTY,
-                                             NCHILD,
-                                             RACE,
-                                             MARST, 
-                                             EMPSTAT,
-                                             MULTGEN
+                                           , HHINCOME
+                                           , MALE
+                                           , AGE 
+                                           , POVERTY
+                                           , NCHILD
+                                           , WHITE
+                                           , BLACK
+                                           , INDIAN_ALASKA
+                                           , ASIAN_PACIFIC
+                                           , OTHER_RACE
+                                           , MULTIPLE_RACE
+                                           , MARRIED
+                                           , EMPLOYED
+                                           , NOTLABOR
+                                           , ONE_GEN
+                                           , TWO_GEN
+                                           , THREE_MORE_GEN
                                            , starts_with("INX"))
 )
 
@@ -218,19 +259,27 @@ model <- lm(migrate_binary ~
               post:city_ind +
               HHINCOME + # control variable
               AGE + # control
-              SEX +
+              MALE +
               POVERTY +
               NCHILD +
-              RACE + 
-              MARST + #Marital status
-              EMPSTAT +
-              MULTGEN,
+              WHITE + 
+              BLACK +
+              INDIAN_ALASKA +
+              ASIAN_PACIFIC +
+              OTHER_RACE +
+              MULTIPLE_RACE +
+              MARRIED +
+              EMPLOYED +
+              NOTLABOR +
+              ONE_GEN +
+              TWO_GEN +
+              THREE_MORE_GEN,
             data = control)
 
 summary(model)
 
 # create the table
-t1 <- tbl_regression(model, label=list(EMPSTAT ~ "Employment Status", MULTGEN ~ "Multigenerational household", post ~ "Post-Period Indicator", city_ind ~ "Treatment Indicator", RACE ~ "Race"))
+t1 <- tbl_regression(model, label=list(EMPLOYED ~ "Employed", TWO_GEN ~ "Two-Gen household", post ~ "Post-Period Indicator", city_ind ~ "Treatment Indicator", WHITE ~ "White"))
 caption = "Regression Model Summary Output"
 modify_caption(t1, caption, text_interpret = c("md", "html"))
 print(t1)
