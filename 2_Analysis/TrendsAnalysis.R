@@ -19,7 +19,7 @@ library(Hmisc)
 
 # TRENDS DATA ------------------------------------------------------------------  
 
-sample <- read.csv("/Users/evaphillips/Documents/GitHub/universal-pre-k/0_Data/filtered_sample_prek_allcities.csv")%>%
+sample <- read.csv("/Users/lynnmiao/Documents/GitHub/right-to-counsel-capstone/0_Data/filtered_sample_prek_allcities.csv")%>%
   filter(YEAR >= 2009) %>%
   mutate(moved = case_when(MIGRATE1 ==2 ~ 1,
                            MIGRATE1 == 2 ~ 1,

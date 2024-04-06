@@ -284,6 +284,10 @@ caption = "Regression Model Summary Output"
 modify_caption(t1, caption, text_interpret = c("md", "html"))
 print(t1)
 
+# Demographics comparison for NYC and SD ---------------------------------------------------------------------
+
+
+
 ######scratch---------
 
 # create a flag for post-period if it's supposed to be 0 for all control (need to check)
