@@ -48,7 +48,7 @@ df <- df %>%
   
   df_svy <- survey::svydesign(~1, weights = ~HHWT, data = df) %>%
     tbl_svysummary(by = city, 
-                   include = c(MIGRATE_clean,SEX_clean,AGE,MARST_clean,EMPSTAT_clean,RACE_clean,NCHILD,YNGCH,POVERTY,HHINCOME,FTOTINC),
+                   include = c(MIGRATE_clean,SEX_clean,AGE,MARST_clean,EMPSTAT_clean,RACE_clean,NCHILD,POVERTY,HHINCOME,FTOTINC),
                    label = list(
                      MIGRATE_clean ~ "Migration",
                      SEX_clean ~ "Sex",
@@ -57,7 +57,6 @@ df <- df %>%
                      EMPSTAT_clean ~ "Employment Status",
                      RACE_clean ~ "Race",
                      NCHILD ~ "Number of Children",
-                     YNGCH ~ "Youngest Child Age",
                      POVERTY ~ "Poverty Status",
                      HHINCOME ~ "Total Household Income",
                      FTOTINC ~ "Total Family Income")) %>% 
@@ -66,7 +65,10 @@ df <- df %>%
                         stat_1 = '**New York City**',
                         stat_2 = '**San Diego**'
                       ) %>%
-                      modify_spanning_header(all_stat_cols() ~ "**City**")
+                      modify_spanning_header(all_stat_cols() ~ "**City**") %>%
+                      modify_caption("**Table 2: Descriptive Statistics**") %>%
+                      bold_labels() %>%
+                      add_overall()
  
   df_svy
   
