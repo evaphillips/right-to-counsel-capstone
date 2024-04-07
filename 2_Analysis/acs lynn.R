@@ -141,7 +141,7 @@ filtered_sample_prek_all <- filtered_sample_prek_all %>%
 options(scipen = 999, digits = 10)
 
 # filter dataset to only NYC and control (San Diego in this case)
-control <- subset(filtered_sample_prek_all, city %in% c("NYC", "SD"))
+control <- subset(filtered_sample_prek_all, city %in% c("NYC", "HOU"))
 
 # apply weights (HHWT)
 control <- control[rep(seq_len(nrow(control)), control$HHWT), ]
@@ -185,12 +185,12 @@ control$ONE_GEN <- ifelse(control$MULTGEN == 1, 1, 0)
 control$TWO_GEN <- ifelse(control$MULTGEN == 2, 1, 0)
 control$THREE_MORE_GEN <- ifelse(control$MULTGEN == 3, 1, 0)
 
+######### FOR EVENT STUDY
+
 # create a flag for year
 prepended_value <- "INX"
 control$Year_INX <- paste0(prepended_value, control$YEAR)
 control_wide <- pivot_wider(control, names_from = Year_INX, values_from = Year_INX, values_fn = list(Year_INX = length), values_fill = 0)
-
-lapply(control[c('MARRIED', 'EMPLOYED', 'NOTLABOR')], unique)
 
 # estimate the regression
 es <- lm(migrate_binary ~ ., data = select(control_wide
@@ -279,9 +279,25 @@ model <- lm(migrate_binary ~
 summary(model)
 
 # create the table
-t1 <- tbl_regression(model, label=list(EMPLOYED ~ "Employed", TWO_GEN ~ "Two-Gen household", post ~ "Post-Period Indicator", city_ind ~ "Treatment Indicator", WHITE ~ "White"))
+t1 <- tbl_regression(model, label=list(EMPLOYED ~ "Employed"
+                                       , TWO_GEN ~ "Two-Gen household"
+                                       , post ~ "Post-Period Indicator"
+                                       , MALE ~ "Male"
+                                       , BLACK ~ "Black"
+                                       , INDIAN_ALASKA	~ "Indian Alaskan"
+                                       , ASIAN_PACIFIC ~ "Asian Pacific"
+                                       , OTHER_RACE	~ "Other Race"
+                                       , MARRIED ~ "Married"
+                                       , NOTLABOR ~ "Unemployed"
+                                       , ONE_GEN ~ "Single Generation Household"
+                                       , city_ind ~ "Treatment Indicator", WHITE ~ "White"))
+
 caption = "Regression Model Summary Output"
 modify_caption(t1, caption, text_interpret = c("md", "html"))
+
+t1 %>% 
+  as_gt() %>%
+  gt::gtsave(filename = "houston_regressiontable.docx" )
 print(t1)
 
 # Demographics comparison for NYC and SD ---------------------------------------------------------------------
