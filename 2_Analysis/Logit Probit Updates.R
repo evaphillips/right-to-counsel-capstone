@@ -97,6 +97,10 @@ logit <- glm(migrate_binary ~
 
 summary(logit)
 
+# create the table
+stargazer(logit, type="text", out="logitmodel.txt")
+stargazer(logit, type="text", title="Table 4.1: Logit Model", out="logitmodel.htm", dep.var.labels=c("Migration"), covariate.labels=c("Post-Period Indicator","Treatment Indicator","Household Income","Age","Male","Poverty Status","Number of Children","White","Black","Indian Alaskan","Asian Pacific","Other Race","Multiple Races","Married","Employed","Not in Labor Force","One Generation Household","Two-Gen Household","Three or more Generation Household","Treatment Effect","Constant"))
+
 # Probit model with controls ---------------------------------------------------------
 probit <- glm(migrate_binary ~ 
                 post + #flag for pre/post
@@ -124,6 +128,7 @@ probit <- glm(migrate_binary ~
 
 summary(probit)
 
+stargazer(probit, type="text", title="Table 4.2: Probit Model", out="probitmodel.htm", dep.var.labels=c("Migration"), covariate.labels=c("Post-Period Indicator","Treatment Indicator","Household Income","Age","Male","Poverty Status","Number of Children","White","Black","Indian Alaskan","Asian Pacific","Other Race","Multiple Races","Married","Employed","Not in Labor Force","One Generation Household","Two-Gen Household","Three or more Generation Household","Treatment Effect","Constant"))
 
 
 
