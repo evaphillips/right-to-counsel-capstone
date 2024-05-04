@@ -130,18 +130,22 @@ filtered_sample_prek_all <- ACS_1_year_cities %>%
          NCHLT5 > 0) # Number of own children under age 5 is > 1
 
 
+# remove scientific notation
+options(scipen = 999, digits = 10)
+
+
 # remove 2020 from dataframe
 
 filtered_sample_prek_all <- filtered_sample_prek_all %>%
   filter(YEAR != 2020)
 
+filtered_sample_prek_all <- filtered_sample_prek_all %>%
+  filter(YEAR != 2019)
+
 # Event Study ---------------------------------------------------------------------
 
-# remove scientific notation
-options(scipen = 999, digits = 10)
-
 # filter dataset to only NYC and control (San Diego in this case)
-control <- subset(filtered_sample_prek_all, city %in% c("NYC", "HOU"))
+control <- subset(filtered_sample_prek_all, city %in% c("NYC", "SD"))
 
 # apply weights (HHWT)
 control <- control[rep(seq_len(nrow(control)), control$HHWT), ]
@@ -244,9 +248,9 @@ ggplot(data = merged_df, mapping = aes(x = Year, y = Coefficient)) +
   geom_line(linetype = "dashed") +
   geom_point() + 
   geom_errorbar(aes(ymin = (Coefficient-Std_Error), ymax = (Coefficient+Std_Error)), width = 0.2) +
-  labs(title = "Coefficient with Error Bars",
+  labs(title = "Renter Mobility Before and After 2014",
        x = "Year",
-       y = "Coefficient") +
+       y = "Coefficient of Interest") +
   scale_x_continuous(breaks = seq(min(merged_df$Year), max(merged_df$Year), by = 1)) +
   geom_vline(xintercept = 2014)
 
@@ -279,6 +283,88 @@ model <- lm(migrate_binary ~
 summary(model)
 
 # create the table
+
+stargazer(model, type="text", title="Linear Model"
+          , dep.var.labels=c("Migration")
+          , covariate.labels=c("Post-Period Indicator","Treatment Indicator","Household Income","Age","Male","Poverty Status","Number of Children","White","Black","Indian Alaskan","Asian Pacific","Other Race","Multiple Races","Married","Employed","Not in Labor Force","One Generation Household","Two-Gen Household","Three or more Generation Household","Treatment Effect","Constant"))
+
+
+# [Copied from Anuska's Code] Logit model with controls --------------------------------------------------------------------
+logit <- glm(migrate_binary ~ 
+               post + #flag for pre/post
+               city_ind + #flag for treatment vs. control
+               post:city_ind +
+               HHINCOME + # control variable
+               AGE + # control
+               MALE +
+               POVERTY +
+               NCHILD +
+               WHITE + 
+               BLACK +
+               INDIAN_ALASKA +
+               ASIAN_PACIFIC +
+               OTHER_RACE +
+               MULTIPLE_RACE +
+               MARRIED +
+               EMPLOYED +
+               NOTLABOR +
+               ONE_GEN +
+               TWO_GEN +
+               THREE_MORE_GEN,
+             family=binomial (link = "logit"), 
+             data = control)
+
+summary(logit)
+
+# create the table
+stargazer(logit, type="text", out="logitmodel.txt")
+stargazer(logit, type="text", title="Table 4.1: Logit Model", out="logitmodel.htm", dep.var.labels=c("Migration"), covariate.labels=c("Post-Period Indicator","Treatment Indicator","Household Income","Age","Male","Poverty Status","Number of Children","White","Black","Indian Alaskan","Asian Pacific","Other Race","Multiple Races","Married","Employed","Not in Labor Force","One Generation Household","Two-Gen Household","Three or more Generation Household","Treatment Effect","Constant"))
+
+# Probit model with controls ---------------------------------------------------------
+probit <- glm(migrate_binary ~ 
+                post + #flag for pre/post
+                city_ind + #flag for treatment vs. control
+                post:city_ind +
+                HHINCOME + # control variable
+                AGE + # control
+                MALE +
+                POVERTY +
+                NCHILD +
+                WHITE + 
+                BLACK +
+                INDIAN_ALASKA +
+                ASIAN_PACIFIC +
+                OTHER_RACE +
+                MULTIPLE_RACE +
+                MARRIED +
+                EMPLOYED +
+                NOTLABOR +
+                ONE_GEN +
+                TWO_GEN +
+                THREE_MORE_GEN,
+              family=binomial (link = "probit"), 
+              data = control)
+
+summary(probit)
+
+stargazer(probit, type="text", title="Table 4.2: Probit Model", out="probitmodel.htm", dep.var.labels=c("Migration"), covariate.labels=c("Post-Period Indicator","Treatment Indicator","Household Income","Age","Male","Poverty Status","Number of Children","White","Black","Indian Alaskan","Asian Pacific","Other Race","Multiple Races","Married","Employed","Not in Labor Force","One Generation Household","Two-Gen Household","Three or more Generation Household","Treatment Effect","Constant"))
+
+# Combine all three models
+
+stargazer(model, logit, probit, type="text", title="Results"
+          , covariate.labels=c("Post-Period Indicator","Treatment Indicator","Household Income","Age","Male","Poverty Status","Number of Children","White","Black","Indian Alaskan","Asian Pacific","Other Race","Multiple Races","Married","Employed","Not in Labor Force","One Generation Household","Two-Gen Household","Three or more Generation Household","Treatment Effect","Constant")
+          , align=TRUE, no.space=TRUE,single.row=TRUE)
+
+
+
+# for export
+stargazer(model, logit, probit, type="html", out="combined.html", title="Results"
+          , covariate.labels=c("Post-Period Indicator","Treatment Indicator","Household Income","Age","Male","Poverty Status","Number of Children","White","Black","Indian Alaskan","Asian Pacific","Other Race","Multiple Races","Married","Employed","Not in Labor Force","One Generation Household","Two-Gen Household","Three or more Generation Household","Treatment Effect","Constant")
+          , align=TRUE, no.space=TRUE, single.row=TRUE)
+
+# SCRATCH ---------------------------------------------------------------------
+
+# create the table
 t1 <- tbl_regression(model, label=list(EMPLOYED ~ "Employed"
                                        , TWO_GEN ~ "Two-Gen household"
                                        , post ~ "Post-Period Indicator"
@@ -297,14 +383,8 @@ modify_caption(t1, caption, text_interpret = c("md", "html"))
 
 t1 %>% 
   as_gt() %>%
-  gt::gtsave(filename = "houston_regressiontable.docx" )
+  gt::gtsave(filename = "SD_regressiontable.docx" )
 print(t1)
-
-# Demographics comparison for NYC and SD ---------------------------------------------------------------------
-
-
-
-######scratch---------
 
 # create a flag for post-period if it's supposed to be 0 for all control (need to check)
 #control <- control %>%
